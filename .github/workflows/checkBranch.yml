@@ -1,0 +1,54 @@
+name: Check Branch
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  target:
+    name: Target
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      only_yarn_install: ${{ steps.check.outputs.only_yarn_install }}
+    steps:
+      - name: check
+        id: check
+        run: echo "::set-output name=only_yarn_install::${{ github.ref_name == 'main' && 'true' || 'false' }}"
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: target
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: volta-cli/action@v4
+
+      - uses: actions/cache@v3
+        id: yarn-cache
+        with:
+          path: |
+            node_modules
+          key: node-v${{ matrix.node-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/yarn.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
+        run: yarn --check-files --frozen-lockfile --non-interactive
+
+      - name: Lint
+        if: needs.target.outputs.only_yarn_install != 'true'
+        run: yarn lint
+
+      - name: Build
+        if: needs.target.outputs.only_yarn_install != 'true'
+        run: yarn build
+
+      - name: Test (Jest)
+        if: needs.target.outputs.only_yarn_install != 'true'
+        run: yarn test:jest

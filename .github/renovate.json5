@@ -1,0 +1,59 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:base',
+    ':enableVulnerabilityAlertsWithLabel(security)',
+    ':timezone(Asia/Tokyo)',
+  ],
+  schedule: ['before 8am every weekday', 'after 8pm every weekday'],
+  labels: ['dependencies'],
+  dockerfile: {
+    fileMatch: ['(^|/)Dockerfile-[^/]*$'],
+  },
+  packageRules: [
+    {
+      matchUpdateTypes: 'major',
+      addLabels: ['major'],
+    },
+    {
+      matchUpdateTypes: ['patch', 'pin'],
+      automerge: true,
+      addLabels: ['patch', 'automerge'],
+    },
+    {
+      matchPackagePatterns: ['^@types/'],
+      automerge: true,
+      addLabels: ['types', 'automerge'],
+      major: {
+        automerge: false,
+      },
+    },
+    {
+      groupName: 'linters',
+      extends: ['packages:linters'],
+      matchPackageNames: ['prettier'],
+      matchPackagePatterns: ['^@typescript-eslint/'],
+      addLabels: ['linters'],
+    },
+    {
+      groupName: 'jest',
+      matchPackageNames: ['jest', '@types/jest', 'vue-jest'],
+      addLabels: ['jest'],
+    },
+    {
+      groupName: 'react',
+      matchPackageNames: [
+        'react',
+        '@types/react',
+        'react-dom',
+        '@types/react-dom',
+      ],
+      addLabels: ['react'],
+      allowedVersions: '<18.0.0',
+    },
+    {
+      matchPackageNames: ['node'],
+      allowedVersions: '<17.0.0',
+    },
+  ],
+}
