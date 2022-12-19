@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/line-clamp": "0.4.2",
+    "@tanstack/react-virtual": "^3.0.0-beta.30",
     "clsx": "1.2.1",
     "next": "^13.0.7",
     "react": "^18.2.0",
